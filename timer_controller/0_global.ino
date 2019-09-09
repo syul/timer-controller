@@ -313,5 +313,20 @@ class c_select_entry: public c_entry {
     };
 };
 
+template <class T>
+class Delegate {
+  public:
+  Delegate(T* target, void (T::*cb)(tmElements_t tm)) {
+    this->target = target;
+    this->cb = cb;
+  };
+  trigger(tmElements_t tm) {
+    ((this->target)->*cb)(tm);
+  }
+  private:
+  T* target;
+  void (T::*cb)(tmElements_t);
+};
+
 // analog input handler
 AnalogInput ai(analogRead);

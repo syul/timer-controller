@@ -2,12 +2,14 @@
  * MAIN MENU SET TIME ENTRY CLASS CONTROLLER
  *
  */
+template <class T>
 class c_set_time_menu: public c_entry {
   public:
+    Delegate<T>* delegate;
     byte entry;
     byte current_hour;
     byte current_minute;
-    c_set_time_menu(c_entry*, char*);
+    c_set_time_menu(c_entry*, char*, Delegate<T>* delegate);
     void init(byte, byte);
     void output();
     void onExit();
@@ -16,17 +18,21 @@ class c_set_time_menu: public c_entry {
     void onDown();
 };
 
-c_set_time_menu::c_set_time_menu(c_entry* parent, char* display_name)
+template <class T>
+c_set_time_menu<T>::c_set_time_menu(c_entry* parent, char* display_name, Delegate<T>* delegate)
   :c_entry(parent, display_name) {
   this->entry = 0;
+  this->delegate = delegate;
 };
 
-void c_set_time_menu::init(byte hour, byte minute) {
+template <class T>
+void c_set_time_menu<T>::init(byte hour, byte minute) {
   this->current_hour = hour;
   this->current_minute = minute;
 }
 
-void c_set_time_menu::output() {
+template <class T>
+void c_set_time_menu<T>::output() {
   this->output_time(4, 0, this->current_hour, this->current_minute);
   switch(this->entry) {
     case 1:
@@ -56,18 +62,19 @@ void c_set_time_menu::output() {
   }
 };
 
-void c_set_time_menu::onExit() {
+template <class T>
+void c_set_time_menu<T>::onExit() {
   tmElements_t tm;
-  RTC.read(tm);
   tm.Hour = this->current_hour;
   tm.Minute = this->current_minute;
-  RTC.write(tm);
+  this->delegate->trigger(tm);
   lcd.clear();
   this->entry = 0;
   current_entry = this->parent;
 };
 
-void c_set_time_menu::onEnter() {
+template <class T>
+void c_set_time_menu<T>::onEnter() {
   if(this->entry == 2) {
     this->entry = 0;
   } else {
@@ -75,7 +82,8 @@ void c_set_time_menu::onEnter() {
   }
 };
 
-void c_set_time_menu::onUp() {
+template <class T>
+void c_set_time_menu<T>::onUp() {
   if(this->entry == 1) {
     this->current_hour ++;
   }
@@ -90,7 +98,8 @@ void c_set_time_menu::onUp() {
   }
 };
 
-void c_set_time_menu::onDown() {
+template <class T>
+void c_set_time_menu<T>::onDown() {
  if(this->entry == 1) {
     this->current_hour --;
   }
@@ -152,25 +161,56 @@ class c_set_channel_a_mode: public c_select_entry {
       this->children_count = 3;
     };
 };
-
-class c_set_channel_a_timer: public c_entry {
-  public:
-    c_set_channel_a_timer(c_entry* parent, char* display_name): c_entry(parent, display_name) {};
-};
 /*
  * CHANNEL A MENU CLASS CONTROLLER
  * - Set mode
- * - Set time
+ * - Set time on
+ * - Set time off
  *
  */
 class c_set_channel_a: public c_select_entry {
   public:
     c_set_channel_a(c_entry* parent, char* display_name)
     : c_select_entry(parent, display_name) {
+      this->delegate_on = new Delegate<c_set_channel_a>(this, &this->on_set_time_on);
+      this->delegate_off = new Delegate<c_set_channel_a>(this, &this->on_set_time_off);
       this->children[0] = new c_set_channel_a_mode(this, "Set mode");
-      this->children[1] = new c_set_channel_a_timer(this, "Set time");
-      this->children_count = 2;
+      this->children[1] = new c_set_time_menu<c_set_channel_a>(this, "Set time on", this->delegate_on);
+      this->children[2] = new c_set_time_menu<c_set_channel_a>(this, "Set time off", this->delegate_off);
+      this->children_count = 3;
     };
+  private:
+    Delegate<c_set_channel_a>* delegate_on;
+    Delegate<c_set_channel_a>* delegate_off;
+    void on_set_time_on(tmElements_t tm) {
+      EEPROM.write(MEMORY_CHANNEL_A_ADDR_HOUR_ON, tm.Hour);
+      EEPROM.write(MEMORY_CHANNEL_A_ADDR_MINUTE_ON, tm.Minute);
+    };
+    void on_set_time_off(tmElements_t tm) {
+      EEPROM.write(MEMORY_CHANNEL_A_ADDR_HOUR_OFF, tm.Hour);
+      EEPROM.write(MEMORY_CHANNEL_A_ADDR_MINUTE_OFF, tm.Minute);
+    };
+    void onEnter() {
+      tmElements_t tm;
+      switch(this->cursor_pos) {
+        case 1:
+          c_set_time_menu<c_set_channel_a>* entry_on = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[1]);
+          tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_ON);
+          tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_ON);
+          entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+          break;
+        case 2:
+          c_set_time_menu<c_set_channel_a>* entry_off = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[2]);
+          tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_OFF);
+          tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_OFF);
+          entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+          break;
+        default:
+          break;
+      };
+      c_select_entry::onEnter();
+    };
+    
 };
 /*
  * CHANNEL B MODE TIMER MENU ENTRY CLASS CONTROLLER
@@ -214,28 +254,54 @@ c_set_channel_b_mode::c_set_channel_b_mode(c_entry* parent, char* display_name):
   this->children_count = 3;
 };
 /*
- * CHANNELB SET TIMER MENU ENTRY CLASS CONTROLLER
- *
- */
-class c_set_channel_b_timer: public c_entry {
-  public:
-    c_set_channel_b_timer(c_entry* parent, char* display_name): c_entry(parent, display_name) {};
-};
-/*
  * CHANNEL B MENU CLASS CONTROLLER
  * - Set mode
- * - Set time
+ * - Set time on
+ * - Set time off
  *
  */
 class c_set_channel_b: public c_select_entry {
   public:
-    c_set_channel_b(c_entry*, char*);
-};
-
-c_set_channel_b::c_set_channel_b(c_entry* parent, char* display_name): c_select_entry(parent, display_name) {
-  this->children[0] = new c_set_channel_b_mode(this, "Set mode");
-  this->children[1] = new c_set_channel_b_timer(this, "Set time");
-  this->children_count = 2;
+    c_set_channel_b(c_entry* parent, char* display_name)
+      : c_select_entry(parent, display_name) {
+      this->delegate_on = new Delegate<c_set_channel_b>(this, &this->on_set_time_on);
+      this->delegate_off = new Delegate<c_set_channel_b>(this, &this->on_set_time_off);
+      this->children[0] = new c_set_channel_b_mode(this, "Set mode");
+      this->children[1] = new c_set_time_menu<c_set_channel_b>(this, "Set time on", this->delegate_on);
+      this->children[2] = new c_set_time_menu<c_set_channel_b>(this, "Set time off", this->delegate_off);
+      this->children_count = 3;
+    };
+  private:
+    Delegate<c_set_channel_b>* delegate_on;
+    Delegate<c_set_channel_b>* delegate_off;
+    void on_set_time_on(tmElements_t tm) {
+      EEPROM.write(MEMORY_CHANNEL_B_ADDR_HOUR_ON, tm.Hour);
+      EEPROM.write(MEMORY_CHANNEL_B_ADDR_MINUTE_ON, tm.Minute);
+    }
+    void on_set_time_off(tmElements_t tm) {
+      EEPROM.write(MEMORY_CHANNEL_B_ADDR_HOUR_OFF, tm.Hour);
+      EEPROM.write(MEMORY_CHANNEL_B_ADDR_MINUTE_OFF, tm.Minute);
+    };
+    void onEnter() {
+      tmElements_t tm;
+      switch(this->cursor_pos) {
+        case 1:
+          c_set_time_menu<c_set_channel_b>* entry_on = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[1]);
+          tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_ON);
+          tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_ON);
+          entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+          break;
+        case 2:
+          c_set_time_menu<c_set_channel_b>* entry_off = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[2]);
+          tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_OFF);
+          tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_OFF);
+          entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+          break;
+        default:
+          break;
+      };
+      c_select_entry::onEnter();
+    };
 };
 /*
  * MAIN MENU CLASS CONTROLLER
@@ -248,21 +314,33 @@ class c_main_menu: public c_select_entry {
   public:
     c_main_menu(c_entry*);
     void onEnter();
+    void onSetTime(tmElements_t);
+  private:
+    Delegate<c_main_menu>* delegate;
 };
 
 c_main_menu::c_main_menu(c_entry* parent): c_select_entry(parent) {
-  this->children[0] = new c_set_time_menu(this, "Set time");
+  this->delegate = new Delegate<c_main_menu>(this, &this->onSetTime);
+  this->children[0] = new c_set_time_menu<c_main_menu>(this, "Set time", this->delegate);
   this->children[1] = new c_set_date_menu(this, "Set date");
   this->children[2] = new c_set_channel_a(this, "Set channel A");
   this->children[3] = new c_set_channel_b(this, "Set channel B");
   this->children_count = 4;
 };
 
+void c_main_menu::onSetTime(tmElements_t tm) {
+  tmElements_t newTm;
+  RTC.read(newTm);
+  newTm.Hour = tm.Hour;
+  newTm.Minute = tm.Minute;
+  RTC.write(newTm);
+};
+
 void c_main_menu::onEnter() {
   switch(this->cursor_pos) {
     case 0:
       tmElements_t tm;
-      c_set_time_menu* entry = static_cast<c_set_time_menu*>(this->children[0]);
+      c_set_time_menu<c_main_menu>* entry = static_cast<c_set_time_menu<c_main_menu>*>(this->children[0]);
       RTC.read(tm);
       entry->init(tm.Hour, tm.Minute);
       break;
