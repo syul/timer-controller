@@ -442,10 +442,24 @@ class c_screen: public c_entry {
       lcd.print("B");
       delete output; 
     };
+
+    void print_channel_status(byte ch_status) {
+      if(ch_status == CHANNEL_MODE_TIMER) {
+        lcd.write(byte(0));
+      }
+      if(ch_status == CHANNEL_MODE_ON) {
+        lcd.write(byte(4));
+      }
+      if(ch_status == CHANNEL_MODE_OFF) {
+        lcd.write(byte(5));
+      }
+    }
     /*
      * Main function which is called every one second and updates LCD display data.
      */
     void tick() {
+      byte chennel_a_status = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_MODE);
+      byte chennel_b_status = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_MODE);
       // init time structure
       tmElements_t tm;
       // fill current time structure with data retrieved from RTC module
@@ -454,9 +468,11 @@ class c_screen: public c_entry {
       lcd.setCursor(0, 0);
       lcd.print("A");
       lcd.write(byte(2));
+      print_channel_status(chennel_a_status);
       lcd.setCursor(0, 1);
       lcd.print("B");
       lcd.write(byte(2));
+      print_channel_status(chennel_b_status);
       // output free memory
       this->print_free_memory(10, 1);
       // output time

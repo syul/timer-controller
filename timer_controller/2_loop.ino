@@ -62,12 +62,36 @@ void setup() {
     B00000
   };
 
+  byte timerOnChar[] = {
+    B01110,
+    B10001,
+    B10001,
+    B10001,
+    B01110,
+    B00000,
+    B00000,
+    B00000
+  };
+
+  byte timerOffChar[] = {
+    B01110,
+    B11001,
+    B10101,
+    B10011,
+    B01110,
+    B00000,
+    B00000,
+    B00000
+  };
+
 
   lcd.begin(16, 2);
   lcd.createChar(0, clockChar);
   lcd.createChar(1, memChar);
   lcd.createChar(2, arrowChar);
   lcd.createChar(3, cursorChar);
+  lcd.createChar(4, timerOnChar);
+  lcd.createChar(5, timerOffChar);
   
   set_time(); 
   
