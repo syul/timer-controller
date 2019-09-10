@@ -160,6 +160,29 @@ class c_set_channel_a_mode: public c_select_entry {
       this->children[2] = new c_set_channel_a_mode_off(this, "Always off");
       this->children_count = 3;
     };
+    void onEnter() {
+      if(this->cursor_pos == 0) {
+        EEPROM.write(MEMORY_CHANNEL_A_ADDR_HOUR_MODE, CHANNEL_MODE_TIMER);
+      }
+
+      if(this->cursor_pos == 1) {
+        EEPROM.write(MEMORY_CHANNEL_A_ADDR_HOUR_MODE, CHANNEL_MODE_ON);
+      }
+
+      if(this->cursor_pos == 2) {
+        EEPROM.write(MEMORY_CHANNEL_A_ADDR_HOUR_MODE, CHANNEL_MODE_OFF);
+      }
+      
+      c_select_entry::onExit();
+    };
+    void onExit() {
+      this->onEnter();
+    };
+    void init(byte pos) {
+      lcd.clear();
+      this->cursor_pos = pos;
+      this->scroll_pos = cursor_pos / 2;
+    };
 };
 /*
  * CHANNEL A MENU CLASS CONTROLLER
@@ -192,6 +215,11 @@ class c_set_channel_a: public c_select_entry {
     };
     void onEnter() {
       tmElements_t tm;
+
+      if(this->cursor_pos == 0) {
+        c_set_channel_a_mode* entry_mode = static_cast<c_set_channel_a_mode*>(this->children[0]);
+        entry_mode->init(EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_MODE));
+      }
       
       if(this->cursor_pos == 1) {
         c_set_time_menu<c_set_channel_a>* entry_on = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[1]);
@@ -244,6 +272,9 @@ class c_set_channel_b_mode_off: public c_entry {
 class c_set_channel_b_mode: public c_select_entry {
   public:
     c_set_channel_b_mode(c_entry* parent, char* display_name);
+    void init(byte);
+    void onEnter();
+    void onExit();
 };
 
 c_set_channel_b_mode::c_set_channel_b_mode(c_entry* parent, char* display_name): c_select_entry(parent, display_name) {
@@ -251,7 +282,34 @@ c_set_channel_b_mode::c_set_channel_b_mode(c_entry* parent, char* display_name):
   this->children[1] = new c_set_channel_b_mode_on(this, "Always on");
   this->children[2] = new c_set_channel_b_mode_off(this, "Always off");
   this->children_count = 3;
+}
+
+void c_set_channel_b_mode::onEnter() {
+  if(this->cursor_pos == 0) {
+    EEPROM.write(MEMORY_CHANNEL_B_ADDR_HOUR_MODE, CHANNEL_MODE_TIMER);
+  }
+
+  if(this->cursor_pos == 1) {
+    EEPROM.write(MEMORY_CHANNEL_B_ADDR_HOUR_MODE, CHANNEL_MODE_ON);
+  }
+
+  if(this->cursor_pos == 2) {
+    EEPROM.write(MEMORY_CHANNEL_B_ADDR_HOUR_MODE, CHANNEL_MODE_OFF);
+  }
+  
+  c_select_entry::onExit();
 };
+
+void c_set_channel_b_mode::onExit() {
+  this->onEnter();
+};
+
+void c_set_channel_b_mode::init(byte pos) {
+  lcd.clear();
+  this->cursor_pos = pos;
+  this->scroll_pos = cursor_pos / 2;
+};
+
 /*
  * CHANNEL B MENU CLASS CONTROLLER
  * - Set mode
@@ -283,6 +341,11 @@ class c_set_channel_b: public c_select_entry {
     };
     void onEnter() {
       tmElements_t tm;
+
+      if(this->cursor_pos == 0) {
+        c_set_channel_b_mode* entry_mode = static_cast<c_set_channel_b_mode*>(this->children[0]);
+        entry_mode->init(EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_MODE));
+      }
 
       if(this->cursor_pos == 1) {
         c_set_time_menu<c_set_channel_b>* entry_on = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[1]);
