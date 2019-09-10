@@ -192,22 +192,21 @@ class c_set_channel_a: public c_select_entry {
     };
     void onEnter() {
       tmElements_t tm;
-      switch(this->cursor_pos) {
-        case 1:
-          c_set_time_menu<c_set_channel_a>* entry_on = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[1]);
-          tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_ON);
-          tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_ON);
-          entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
-          break;
-        case 2:
-          c_set_time_menu<c_set_channel_a>* entry_off = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[2]);
-          tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_OFF);
-          tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_OFF);
-          entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
-          break;
-        default:
-          break;
-      };
+      
+      if(this->cursor_pos == 1) {
+        c_set_time_menu<c_set_channel_a>* entry_on = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[1]);
+        tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_ON);
+        tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_ON);
+        entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+      }
+
+      if(this->cursor_pos == 2) {
+        c_set_time_menu<c_set_channel_a>* entry_off = static_cast<c_set_time_menu<c_set_channel_a>*>(this->children[2]);
+        tm.Hour = EEPROM.read(MEMORY_CHANNEL_A_ADDR_HOUR_OFF);
+        tm.Minute = EEPROM.read(MEMORY_CHANNEL_A_ADDR_MINUTE_OFF);
+        entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+      }
+      
       c_select_entry::onEnter();
     };
     
@@ -284,22 +283,21 @@ class c_set_channel_b: public c_select_entry {
     };
     void onEnter() {
       tmElements_t tm;
-      switch(this->cursor_pos) {
-        case 1:
-          c_set_time_menu<c_set_channel_b>* entry_on = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[1]);
-          tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_ON);
-          tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_ON);
-          entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
-          break;
-        case 2:
-          c_set_time_menu<c_set_channel_b>* entry_off = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[2]);
-          tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_OFF);
-          tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_OFF);
-          entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
-          break;
-        default:
-          break;
-      };
+
+      if(this->cursor_pos == 1) {
+        c_set_time_menu<c_set_channel_b>* entry_on = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[1]);
+        tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_ON);
+        tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_ON);
+        entry_on->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+      }
+
+      if(this->cursor_pos == 2) {
+        c_set_time_menu<c_set_channel_b>* entry_off = static_cast<c_set_time_menu<c_set_channel_b>*>(this->children[2]);
+        tm.Hour = EEPROM.read(MEMORY_CHANNEL_B_ADDR_HOUR_OFF);
+        tm.Minute = EEPROM.read(MEMORY_CHANNEL_B_ADDR_MINUTE_OFF);
+        entry_off->init(tm.Hour == 255 ? 0 : tm.Hour, tm.Minute == 255 ? 0 : tm.Minute);
+      }
+
       c_select_entry::onEnter();
     };
 };
