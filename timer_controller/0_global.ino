@@ -271,7 +271,6 @@ class c_select_entry: public c_entry {
     
     virtual void onEnter() {
       lcd.clear();
-      RTC.read(current_time);
       current_entry = this->children[this->cursor_pos];
     };
     
